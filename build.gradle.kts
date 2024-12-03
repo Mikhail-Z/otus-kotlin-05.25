@@ -1,14 +1,18 @@
 plugins {
-    kotlin("jvm")
+    kotlin("jvm") apply false
 }
 
-group = "me.zabelin"
-version = "1.0-SNAPSHOT"
+group = "me.zabelin.otuskotlin.marketplace"
+version = "0.0.1"
 
 repositories {
     mavenCentral()
 }
 
-tasks.test {
-    useJUnitPlatform()
+subprojects {
+    group = rootProject.group
+    version = rootProject.version
+    repositories {
+        mavenCentral()
+    }
 }
