@@ -1,5 +1,3 @@
-rootProject.name = "otus-kotlin-05.25"
+rootProject.name = "snap-match"
 
-
-includeBuild("lessons")
-includeBuild("ok-marketplace")
+include(":build-logic")
