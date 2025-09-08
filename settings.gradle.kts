@@ -1,3 +1,5 @@
-rootProject.name = "snap-match"
+rootProject.name = "snapmatch"
 
-include(":build-logic")
+includeBuild("build-logic")
+include(":services:scoring-service")
+include(":services:upload-service")
