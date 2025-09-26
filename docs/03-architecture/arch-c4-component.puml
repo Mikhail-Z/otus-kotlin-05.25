@@ -56,6 +56,4 @@ resume_file_storage --> minio : Сохраняет PDF файл
 resume_db_storage --> kafka : Публикует событие о новом резюме
 kafka --> kafka_consumer : Передает событие для обработки
 
-notifier --> kafka : Публикует событие о завершении обработки
-
 @enduml
