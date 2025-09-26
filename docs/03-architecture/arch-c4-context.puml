@@ -1,0 +1,19 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title SnapMatch - Context Diagram
+
+Person(candidate, "Соискатель", "Загружает резюме и получает результат проверки")
+Person(hr, "HR-специалист", "Анализирует кандидатов и управляет вакансиями")
+
+System_Boundary(snapmatch, "SnapMatch") {
+    System(upload, "Upload Service", "Принимает резюме от кандидатов")
+    System(scoring, "Scoring Service", "Оценивает соответствие резюме вакансии")
+}
+
+candidate --> upload : Загружает резюме
+upload --> scoring : Отправляет данные резюме на анализ
+scoring --> hr : Выдаёт оценку и сводку по кандидату
+scoring --> candidate : Отправляет результат кандидату
+
+@enduml

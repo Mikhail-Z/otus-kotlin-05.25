@@ -1,0 +1,59 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title SnapMatch - Component Diagram (Updated)
+
+' ================= Upload Service =================
+Container_Boundary(upload_service, "Upload Service") {
+    Component(resume_api, "Resume API", "Принимает отклики кандидатов (PDF-файлы) (POST-запросы), инициирует валидацию и сохранение")
+    Component(vacancy_api, "Vacancy API", "Предоставляет доступ к тексту вакансий (GET-запросы) и сохраняет вакансии (POST-запросы)")
+    Component(pdf_validator, "PDF Validator", "Проверяет, что файл является PDF, не повржден и имеет корректный размер")
+    Component(pdf_parser, "PDF Parser", "Извлекает текст из PDF для дальнейшего анализа")
+    Component(resume_file_storage, "Resume File Storage", "Сохраняет файл с резюме в MinIO")
+    Component(resume_db_storage, "Resume DB Storage", "Сохраняет информацию о резюме и текст из него в базе данных")
+    Component(vacancy_db_storage, "Vacancy DB Storage", "Сохраняет и получает информацию о вакансиях в базе данных")
+}
+
+resume_api --> pdf_validator : Передает файл резюме для проверки
+pdf_validator --> pdf_parser: Передайт файл резюме для парсинга
+pdf_parser --> resume_file_storage : Сохраняет файл
+pdf_parser --> resume_db_storage : Сохраняет текст резюме и ссылку на сохраненный файл
+resume_file_storage --> resume_db_storage : Передает метаданные резюме и текст из него
+vacancy_api --> vacancy_db_storage : Читает/сохраняет информацию о вакансиях
+
+' ================= Scoring Service =================
+Container_Boundary(scoring, "Scoring Service") {
+    Component(websocket_handler, "WebSocket Handler", "Управляет WebSocket соединениями и отправляет session_id")
+    Component(kafka_consumer, "Kafka Consumer", "Получает события о факте успешности/неуспешности загрузки резюме и новых резюме на обработку в LLM из Kafka и извлекает идентификаторы резюме и вакансии")
+    Component(db_vacancy_resume_getter, "File Retriever", "Получает PDF файлы из MinIO по пути из метаданных")
+    Component(llm, "LLM Evaluator", "Использует LLM для генерации сводки и оценки соответствия")
+    Component(scoring_result_processor, "ScoringResultProcessor", "Формирует статус по результату анализа резюме")
+    Component(db_status_updater, "Resume Status Updater", "Обновляет статус резюме в базе данных")
+    Component(notifier, "Notifier", "Находит WebSocket соединение по session_id и отправляет результат")
+}
+
+kafka_consumer --> notifier : Отправляет через WebSocket сообщение о начале AI анализа
+kafka_consumer --> db_vacancy_resume_getter : Передает идентификаторы резюме и вакансии
+db_vacancy_resume_getter --> notifier : Передает сообщение о начале анализа резюме
+db_vacancy_resume_getter --> llm : Передает тексты резюме и вакансии
+llm --> scoring_result_processor : Передает результат анализа
+scoring_result_processor --> db_status_updater : Обновляет статус
+scoring_result_processor --> notifier : Передает результат для уведомления
+notifier --> websocket_handler : Отправляет через WebSocket сообщение с результатом анализа
+
+' ================= Infrastructure =================
+Container_Ext(kafka, "Kafka", "Message Broker", "Хранит события и управляет очередями сообщений")
+Container_Ext(db, "PostgreSQL", "Database", "Хранение резюме, вакансий и статусов")
+Container_Ext(minio, "MinIO", "Object Storage", "Хранение оригинальных PDF файлов")
+
+' ================= Connections =================
+vacancy_db_storage --> db : Сохраняет информацию о вакансиях
+resume_db_storage --> db : Сохраняет метаданные резюме
+db_status_updater --> db : Обновляет статус обработки
+db_vacancy_resume_getter --> db : Получает инфорацию о резюме и вакансии
+
+resume_file_storage --> minio : Сохраняет PDF файл
+resume_db_storage --> kafka : Публикует событие о новом резюме
+kafka --> kafka_consumer : Передает событие для обработки
+
+@enduml
