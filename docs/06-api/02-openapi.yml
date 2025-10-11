@@ -1,0 +1,598 @@
+openapi: 3.0.3
+info:
+  title: SnapMatch MVP API
+  version: 1.0.0
+  description: |
+    OpenAPI спецификация для SnapMatch MVP. Все эндпоинты защищены JWT токенами Keycloak.
+
+servers:
+  - url: http://localhost:8080
+    description: Локальный сервер
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    UUID:
+      type: string
+      format: uuid
+      description: UUID v4
+    ResumeProcessingStatus:
+      type: string
+      enum: [UPLOADED, PROCESSING, ACCEPTED, REJECTED]
+    UserRole:
+      type: string
+      enum: [CANDIDATE, HR_SPECIALIST]
+    LLMProvider:
+      type: string
+      enum: [GIGACHAT]
+    ResumeAnalysisDetails:
+      type: object
+      properties:
+        strengths:
+          type: array
+          items:
+            type: string
+        weaknesses:
+          type: array
+          items:
+            type: string
+        recommendations:
+          type: array
+          items:
+            type: string
+        summary:
+          type: string
+    Resume:
+      type: object
+      required: [id, userId, vacancyId, fileName, fileKey, mimeType, fileSize, uploadedAt, status]
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        userId:
+          $ref: '#/components/schemas/UUID'
+        vacancyId:
+          $ref: '#/components/schemas/UUID'
+        fileName:
+          type: string
+          minLength: 1
+          maxLength: 255
+          pattern: '^[\w\-.]+$'
+        fileKey:
+          type: string
+          pattern: '^resumes/\\d{4}/\\d{2}/[\w\-]+\.pdf$'
+        mimeType:
+          type: string
+          enum: [application/pdf]
+        fileSize:
+          type: integer
+          minimum: 1
+          maximum: 10485760
+        uploadedAt:
+          type: string
+          format: date-time
+        status:
+          $ref: '#/components/schemas/ResumeProcessingStatus'
+    Vacancy:
+      type: object
+      required: [id, title, description, scoreThreshold, isActive, createdAt, createdBy]
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          minLength: 10
+          maxLength: 5000
+        scoreThreshold:
+          type: integer
+          minimum: 0
+          maximum: 100
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          $ref: '#/components/schemas/UUID'
+    ResumeAnalysis:
+      type: object
+      required: [id, resumeId, score, analysis, llmProvider, llmModel, createdAt]
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        resumeId:
+          $ref: '#/components/schemas/UUID'
+        score:
+          type: integer
+          minimum: 0
+          maximum: 100
+        analysis:
+          $ref: '#/components/schemas/ResumeAnalysisDetails'
+        llmProvider:
+          $ref: '#/components/schemas/LLMProvider'
+        llmModel:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    # --- DTO схемы ---
+    ResumeGetRequest:
+      type: object
+      required: [resumeId]
+      properties:
+        resumeId:
+          $ref: '#/components/schemas/UUID'
+    PaginationRequest:
+      type: object
+      required: [page, perPage]
+      properties:
+        page:
+          type: integer
+          minimum: 0
+        perPage:
+          type: integer
+          minimum: 1
+          maximum: 1000
+    ResumeAnalysisRequest:
+      type: object
+      required: [resumeId]
+      properties:
+        resumeId:
+          $ref: '#/components/schemas/UUID'
+    VacancyCreateRequest:
+      type: object
+      required: [title, description, scoreThreshold]
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          minLength: 10
+          maxLength: 5000
+        scoreThreshold:
+          type: integer
+          minimum: 0
+          maximum: 100
+    VacancySearchRequest:
+      type: object
+      required: [keywords, page, perPage]
+      properties:
+        keywords:
+          type: string
+          minLength: 1
+          maxLength: 100
+        page:
+          type: integer
+          minimum: 0
+        perPage:
+          type: integer
+          minimum: 1
+          maximum: 1000
+    VacancyResumesRequest:
+      type: object
+      required: [vacancyId, page, perPage]
+      properties:
+        vacancyId:
+          $ref: '#/components/schemas/UUID'
+        page:
+          type: integer
+          minimum: 0
+        perPage:
+          type: integer
+          minimum: 1
+          maximum: 1000
+    VacancyDeleteRequest:
+      type: object
+      required: [vacancyId]
+      properties:
+        vacancyId:
+          $ref: '#/components/schemas/UUID'
+    ResumeUploadResponse:
+      type: object
+      required: [resumeId, status]
+      properties:
+        resumeId:
+          $ref: '#/components/schemas/UUID'
+        status:
+          $ref: '#/components/schemas/ResumeProcessingStatus'
+    ResumeResponse:
+      type: object
+      required: [id, userId, vacancyId, fileName, fileKey, fileSize, uploadedAt, status, userEmail, vacancyTitle]
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        userId:
+          $ref: '#/components/schemas/UUID'
+        vacancyId:
+          $ref: '#/components/schemas/UUID'
+        fileName:
+          type: string
+        fileKey:
+          type: string
+        fileSize:
+          type: integer
+        uploadedAt:
+          type: string
+          format: date-time
+        status:
+          $ref: '#/components/schemas/ResumeProcessingStatus'
+    ResumeListItem:
+      type: object
+      required: [id, userId, vacancyId, status, uploadedAt]
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        userId:
+          $ref: '#/components/schemas/UUID'
+        vacancyId:
+          $ref: '#/components/schemas/UUID'
+        status:
+          $ref: '#/components/schemas/ResumeProcessingStatus'
+        score:
+          type: integer
+          nullable: true
+        uploadedAt:
+          type: string
+          format: date-time
+    VacancyResponse:
+      type: object
+      required: [id, title, description, scoreThreshold, isActive, createdAt, createdBy, createdByEmail]
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        title:
+          type: string
+        description:
+          type: string
+        scoreThreshold:
+          type: integer
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          $ref: '#/components/schemas/UUID'
+    ResumeAnalysisResponse:
+      type: object
+      required: [id, resumeId, score, analysis, llmProvider, llmModel, createdAt]
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        resumeId:
+          $ref: '#/components/schemas/UUID'
+        score:
+          type: integer
+        analysis:
+          $ref: '#/components/schemas/ResumeAnalysisDetails'
+        llmProvider:
+          $ref: '#/components/schemas/LLMProvider'
+        llmModel:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    PagedResponse_ResumeListItem_:
+      type: object
+      required: [pageContent, totalElements, page, perPage, hasNext]
+      properties:
+        pageContent:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResumeListItem'
+        totalElements:
+          type: integer
+        page:
+          type: integer
+        perPage:
+          type: integer
+        hasNext:
+          type: boolean
+    PagedResponse_VacancyResponse_:
+      type: object
+      required: [pageContent, totalElements, page, perPage, hasNext]
+      properties:
+        pageContent:
+          type: array
+          items:
+            $ref: '#/components/schemas/VacancyResponse'
+        totalElements:
+          type: integer
+        page:
+          type: integer
+        perPage:
+          type: integer
+        hasNext:
+          type: boolean
+    VacancyDeleteResponse:
+      type: object
+      required: [success]
+      properties:
+        success:
+          type: boolean
+    VacancyGetRequest:
+      type: object
+      required: [ vacancyId ]
+      properties:
+        vacancyId:
+          $ref: '#/components/schemas/UUID'
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: object
+              nullable: true
+
+security:
+  - bearerAuth: []
+
+paths:
+  /api/v1/resume/upload:
+    post:
+      summary: Загрузка резюме (PDF)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file, vacancyId]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                vacancyId:
+                  $ref: '#/components/schemas/UUID'
+      responses:
+        '200':
+          description: Результат загрузки
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResumeUploadResponse'
+        default:
+          description: Ошибка валидации или ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/resume/get:
+    post:
+      summary: Получение резюме по ID
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResumeGetRequest'
+      responses:
+        '200':
+          description: Резюме
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResumeResponse'
+        default:
+          description: Ошибка валидации или ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/resume/my:
+    post:
+      summary: Получение списка своих резюме
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/ResumeGetRequest'
+      responses:
+        '200':
+          description: Список резюме
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResponse_ResumeListItem_'
+        default:
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/resume/analysis:
+    post:
+      summary: Получение анализа резюме
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResumeAnalysisRequest'
+      responses:
+        '200':
+          description: Результат анализа
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResumeAnalysisResponse'
+        default:
+          description: Ошибка валидации или ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/vacancy/create:
+    post:
+      summary: Создание вакансии
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VacancyCreateRequest'
+      responses:
+        '200':
+          description: Вакансия создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VacancyResponse'
+        default:
+          description: Ошибка валидации или ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/vacancy/list:
+    post:
+      summary: Получение списка активных вакансий
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/PaginationRequest'
+      responses:
+        '200':
+          description: Список вакансий
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResponse_VacancyResponse_'
+        default:
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/vacancy/search:
+    post:
+      summary: Поиск вакансий по ключевым словам
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VacancySearchRequest'
+      responses:
+        '200':
+          description: Список вакансий
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResponse_VacancyResponse_'
+        default:
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/vacancy/resumes:
+    post:
+      summary: Получение резюме по вакансии (HR)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VacancyResumesRequest'
+      responses:
+        '200':
+          description: Список резюме
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResponse_ResumeListItem_'
+        default:
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/vacancy/delete:
+    post:
+      summary: Деактивация (удаление) вакансии
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VacancyDeleteRequest'
+      responses:
+        '200':
+          description: Результат удаления
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VacancyDeleteResponse'
+        default:
+          description: Ошибка валидации или ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/vacancy/get:
+    post:
+      summary: Получение вакансии по ID
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VacancyGetRequest'
+      responses:
+        '200':
+          description: Получение резюме по ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VacancyResponse'
+        default:
+          description: Ошибка валидации или ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'

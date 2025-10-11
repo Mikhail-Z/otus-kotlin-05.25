@@ -2,9 +2,9 @@
 
 KCHOST=http://localhost:8080
 REALM=snapmatch
-CLIENT_ID=otus-marketplace-service
+CLIENT_ID=snapmatch-service
 UNAME=snapmatch-test
-PASSWORD=snapmatch
+PASSWORD=qwerty123
 
 # shellcheck disable=SC2006
 #ACCESS_TOKEN=`curl \
