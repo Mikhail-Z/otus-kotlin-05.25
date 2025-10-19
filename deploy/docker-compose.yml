@@ -1,35 +1,4 @@
 services:
-
-#  upload-service:
-#    build: ./upload-service
-#    ports:
-#      - "8081:8080"
-#    depends_on:
-#      - postgres
-#      - kafka
-#    env_file:
-#      - env/.env.kafka.secrets
-#      - env/.env.db.secrets
-#      - env/.env.minio.secrets
-#    environment:
-#      DB_URL: jdbc:postgresql://postgres:5432/snapmatch-db
-#      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-#
-#  scoring-service:
-#    build: ./scoring-service
-#    ports:
-#      - "8082:8080"
-#    depends_on:
-#      - postgres
-#      - kafka
-#    env_file:
-#      - env/.env.kafka.secrets
-#      - env/.env.db.secrets
-#      - env/.env.minio.secrets
-#    environment:
-#      DB_URL: jdbc:postgresql://postgres:5432/snapmatch-db
-#      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-
   app:
     image: nginx:latest
     depends_on:
@@ -65,32 +34,6 @@ services:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
-
-  kafka:
-    image: bitnami/kafka:latest
-    restart: always
-    environment:
-      # KRaft mode configuration
-      KAFKA_CFG_PROCESS_ROLES: broker,controller
-      KAFKA_CFG_NODE_ID: 1
-      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
-      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
-      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
-      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      ALLOW_PLAINTEXT_LISTENER: yes
-      # Отключаем Zookeeper для KRaft режима
-      KAFKA_ENABLE_KRAFT: yes
-    ports:
-      - "9092:9092"
-
-  zookeeper:
-    image: bitnami/zookeeper:latest
-    restart: always
-    environment:
-      ALLOW_ANONYMOUS_LOGIN: yes
-    ports:
-      - "2181:2181"
 
   minio:
     image: minio/minio:latest
