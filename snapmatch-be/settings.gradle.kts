@@ -16,7 +16,12 @@ plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "0.5.0"
 }
 
-include("api-v1-jackson")
-include("api-v1-mappers")
-include("common")
-include("stubs")
+include("snapmatch-api-v1-jackson")
+include("snapmatch-api-v1-mappers")
+include("snapmatch-common")
+include("snapmatch-stubs")
+include("snapmatch-biz")
+include("snapmatch-app-common")
+include("snapmatch-app-ktor")
+include("snapmatch-transport-ktor-rest")
+include("snapmatch-transport-ktor-ws")
