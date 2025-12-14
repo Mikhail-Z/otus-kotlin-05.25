@@ -33,7 +33,6 @@
 - `id: UUID` - Уникальный идентификатор вакансии
 - `title: String` - Название вакансии
 - `description: String` - Описание вакансии
-- `requirements: String` - Требования к кандидату
 - `scoreThreshold: Int` - Пороговое значение метрики (0-100)
 - `isActive: Boolean` - Активна ли вакансия
 - `createdAt: String` - Время создания (ISO 8601: "2024-01-15T10:30:00Z")
@@ -93,7 +92,6 @@
 ### Vacancy (Вакансия):
 - **title**: 1-200 символов, обязательное поле
 - **description**: 10-5000 символов, обязательное поле
-- **requirements**: 10-3000 символов, обязательное поле
 - **scoreThreshold**: Число от 0 до 100 включительно
 
 ### ResumeAnalysis (Анализ резюме):
@@ -232,7 +230,19 @@ Content-Type: application/json
 Ответ: [VacancyDeleteResponse](#vacancydeleteresponse)
 
 
-### 10. WebSocket для уведомлений
+### 10. Получение вакансии по ID
+```
+POST /api/v1/vacancy/get
+Authorization: Bearer {keycloak-jwt-token}
+Content-Type: application/json
+```
+
+Тело запроса: [VacancyGetRequest](#vacancygetrequest)
+
+Ответ: [VacancyResponse](#vacancyresponse)
+
+
+### 11. WebSocket для уведомлений
 ```
 WebSocket: /api/ws/notifications
 Authorization: Bearer {keycloak-jwt-token}
@@ -245,7 +255,7 @@ Authorization: Bearer {keycloak-jwt-token}
 Формат уведомления:
 {
   "type": "resume.status.updated",
-  "resumeId": "uuid", 
+  "resumeId": "uuid",
   "status": "ACCEPTED"
 }
 
@@ -288,7 +298,6 @@ Authorization: Bearer {keycloak-jwt-token}
 {
   "title": "string",        // Название вакансии (например: "Java Developer")
   "description": "string",  // Подробное описание вакансии и компании
-  "requirements": "string", // Требования к кандидату (навыки, опыт)
   "scoreThreshold": "int"   // Минимальный балл для автоматического принятия (0-100)
 }
 ```
@@ -315,6 +324,13 @@ Authorization: Bearer {keycloak-jwt-token}
 ```json
 {
   "vacancyId": "uuid"  // ID вакансии для деактивации (удаления из поиска)
+}
+```
+
+#### VacancyGetRequest
+```json
+{
+  "vacancyId": "uuid"  // ID вакансии для получения детальной информации
 }
 ```
 
@@ -375,7 +391,6 @@ Authorization: Bearer {keycloak-jwt-token}
   "id": "uuid",                     // Уникальный ID вакансии
   "title": "string",                // Название позиции
   "description": "string",          // Подробное описание вакансии
-  "requirements": "string",         // Требования к кандидату
   "scoreThreshold": "int",          // Минимальный балл для автоприема (0-100)
   "isActive": "boolean",            // Активна ли вакансия для откликов
   "createdAt": "2024-01-15T10:30:00Z", // Время создания вакансии
@@ -461,7 +476,7 @@ Authorization: Bearer {keycloak-jwt-token}
 ```json
 {
   "error": {
-    "code": "CORRUPTED_FILE", 
+    "code": "CORRUPTED_FILE",
     "message": "PDF file is corrupted or unreadable",
     "details": { "fileName": "resume.pdf" }
   }

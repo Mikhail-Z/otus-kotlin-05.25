@@ -6,20 +6,16 @@ title SnapMatch - Container Diagram
 Person(candidate, "Соискатель")
 Person(hr, "HR-специалист")
 
-System_Boundary(snapmatch, "SnapMatch") {
-    Container(upload, "Upload Service", "Ktor", "Принимает резюме, валидирует PDF, сохраняет в MinIO")
-    Container(scoring, "Scoring Service", "Ktor + LLM API", "Анализирует резюме на соответствие вакансии")
+System_Boundary(SnapMatch, "SnapMatch") {
+    Container(snapmatch, "SnapMatch", "Ktor + LLM API: принимает резюме, валидирует PDF, сохраняет в MinIO, анализирует резюме на соответствие вакансии c помощью LLM")
     ContainerDb(db, "PostgreSQL", "Хранит данные вакансий, кандидатов и истории откликов")
     Container(storage, "MinIO", "S3-хранилище", "Хранит оригинальные PDF-файлы")
-    Container(kafka, "Kafka", "Брокер сообщений", "Передаёт задачи между сервисами")
 }
 
-candidate --> upload : Загружает резюме
-upload --> storage : Сохраняет PDF
-upload --> kafka : Отправляет событие на обработку
-kafka --> scoring : Передаёт задачу на анализ
-scoring --> db : Записывает результат анализа
-hr --> db : Просматривает результаты
-scoring --> candidate : Отправляет результат
+candidate --> snapmatch : Загружает резюме
+snapmatch --> storage : Сохраняет PDF
+snapmatch --> db : Записывает результат анализа и получает данные из БД
+hr --> snapmatch : Просматривает результаты
+snapmatch --> candidate : Уведомляет о результате анализа резюме
 
 @enduml

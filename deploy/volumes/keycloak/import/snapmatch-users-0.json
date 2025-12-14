@@ -12,7 +12,7 @@
       "type" : "password",
       "userLabel" : "My password",
       "createdDate" : 1706964634548,
-      "secretData" : "{\"value\":\"CBy36ufg5bdAyXTLX9gMYyxw4QXKiAkNox6NFYi8FuQ=\",\"salt\":\"wasUxUctTzzm0c5HTyy7Sw==\",\"additionalParameters\":{}}",
+      "secretData" : "{\"value\":\"3KamSlqs/i47ZNtTWYbUDQ==\",\"salt\":\"wasUxUctTzzm0c5HTyy7Sw==\",\"additionalParameters\":{}}",
       "credentialData" : "{\"hashIterations\":27500,\"algorithm\":\"pbkdf2-sha256\",\"additionalParameters\":{}}"
     } ],
     "disableableCredentialTypes" : [ ],

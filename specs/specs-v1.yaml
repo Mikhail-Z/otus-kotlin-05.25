@@ -1,0 +1,773 @@
+openapi: 3.0.3
+info:
+  title: SnapMatch MVP API
+  version: 1.0.0
+  description: |
+    OpenAPI спецификация для SnapMatch MVP. Все эндпоинты защищены JWT токенами Keycloak.
+
+servers:
+  - url: http://localhost:8080
+    description: Локальный сервер
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    IRequestDto:
+      type: object
+      description: Базовый интерфейс для всех запросов
+      properties:
+        requestType:
+          type: string
+          description: Поле-дескриминатор для вычисления типа запроса
+          example: create
+      discriminator:
+        propertyName: requestType
+        mapping:
+          uploadResume: '#/components/schemas/ResumeUploadRequestDto'
+          getResume: '#/components/schemas/ResumeGetRequestDto'
+          getMyResumes: '#/components/schemas/MyResumesGetPaginationRequestDto'
+          downloadResume: '#/components/schemas/ResumeDownloadRequestDto'
+          createVacancy: '#/components/schemas/VacancyCreateRequestDto'
+          searchVacancies: '#/components/schemas/VacancySearchPaginationRequestDto'
+          getVacancyResumes: '#/components/schemas/VacancyResumesGetPaginationRequestDto'
+          deleteVacancy: '#/components/schemas/VacancyDeleteRequestDto'
+          getVacancy: '#/components/schemas/VacancyGetRequestDto'
+
+    ErrorDto:
+      type: object
+      properties:
+        code:
+          type: string
+        group:
+          type: string
+        field:
+          type: string
+        message:
+          type: string
+
+    ResponseResultDto:
+      type: string
+      enum:
+        - success
+        - error
+
+    IResponseDto:
+      type: object
+      description: Базовый интерфейс для всех ответов
+      properties:
+        responseType:
+          type: string
+          description: Поле-дескриминатор для вычисления типа запроса
+          example: create
+        result:
+          $ref: '#/components/schemas/ResponseResultDto'
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorDto'
+      discriminator:
+        propertyName: responseType
+        mapping:
+          uploadResume: '#/components/schemas/ResumeGetResponseDto'
+          getResume: '#/components/schemas/ResumeGetResponseDto'
+          getMyResumes: '#/components/schemas/ResumesPaginationResponseDto'
+          #downloadResume: '#/components/schemas/ResumeDownloadResponse'
+          createVacancy: '#/components/schemas/VacancyCreateResponseDto'
+          searchVacancies: '#/components/schemas/VacanciesPaginationResponseDto'
+          getVacancyResumes: '#/components/schemas/ResumesPaginationResponseDto'
+          deleteVacancy: '#/components/schemas/VacancyDeleteResponseDto'
+          getVacancy: '#/components/schemas/VacancyGetResponseDto'
+
+    # ---Идентификаторы---
+    UserId:
+      type: string
+      format: uuid
+      description: Идентификатор пользователя в формате UUID v4
+    VacancyId:
+      type: string
+      format: uuid
+      description: Идентификатор вакансии в формате UUID v4
+    ResumeId:
+      type: string
+      format: uuid
+      description: Идентификатор резюме в формате UUID v4
+    ResumeAnalysisId:
+      type: string
+      format: uuid
+      description: Идентификатор анализа резюме в формате UUID v4
+
+    # ---Перечисления---
+    ResumeProcessingStatusDto:
+      type: string
+      enum: [UPLOADED, PROCESSING, ACCEPTED, REJECTED]
+    UserRole:
+      type: string
+      enum: [CANDIDATE, HR_SPECIALIST]
+    LLMProviderDto:
+      type: string
+      enum: [GIGACHAT]
+
+    # ---Вспомогательные сущности---
+    FileRequestDto:
+      type: object
+      required: [ contentB64, fileName ]
+      additionalProperties: false
+      properties:
+        contentB64:
+          type: string
+        fileName:
+          type: string
+
+    FileResponseDto:
+      type: string
+      format: binary
+
+    ResumeAnalysisDetailsDto:
+      type: object
+      required: [strengths, weaknesses, hrRecommendations, summary]
+      properties:
+        strengths:
+          type: array
+          items:
+            type: string
+        weaknesses:
+          type: array
+          items:
+            type: string
+        hrRecommendations:
+          type: array
+          items:
+            type: string
+        summary:
+          type: string
+
+    # ---Stubs---
+    DebugModeDto:
+      type: string
+      enum:
+        - prod
+        - test
+        - stub
+
+    RequestDebugDto:
+      type: object
+      required: [ debug ]
+      properties:
+        debug:
+          $ref: '#/components/schemas/DebugDto'
+
+    DebugDto:
+      type: object
+      properties:
+        mode:
+          $ref: '#/components/schemas/DebugModeDto'
+        stub:
+          $ref: '#/components/schemas/DebugStubsDto'
+
+    DebugStubsDto:
+      type: string
+      description: Перечисления всех стабов
+      enum:
+        - success
+        - notFound
+        - badId
+        - validationError
+        - noRights
+        - badFile
+
+    # ---Объекты---
+    ResumeUploadObjectDto:
+      type: object
+      required: [ id, vacancyId, file ]
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/ResumeId'
+        vacancyId:
+          $ref: '#/components/schemas/VacancyId'
+        file:
+          $ref: '#/components/schemas/FileRequestDto'
+
+    ResumeGetObjectDto:
+      type: object
+      required: [ id ]
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/ResumeId'
+
+    PaginationRequestObjectDto:
+      type: object
+      required: [ page, perPage ]
+      properties:
+        page:
+          type: integer
+          minimum: 0
+        perPage:
+          type: integer
+          minimum: 1
+          maximum: 1000
+
+    ResumeDownloadObjectDto:
+      type: object
+      required: [ fileKey ]
+      additionalProperties: false
+      properties:
+        fileKey:
+          type: string
+
+    VacancyCreateObjectDto:
+      type: object
+      required: [ id, title, description, scoreThreshold, location, minExperienceYears, skills, salaryFrom, salaryTo, companyName ]
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/VacancyId'
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          minLength: 10
+          maxLength: 5000
+        scoreThreshold:
+          type: integer
+          minimum: 0
+          maximum: 100
+        location:
+          nullable: true
+          type: string
+        minExperienceYears:
+          type: integer
+        skills:
+          type: array
+          items:
+            type: string
+        salaryFrom:
+          type: integer
+          minimum: 1
+          nullable: true
+        salaryTo:
+          type: integer
+          nullable: true
+        companyName:
+          type: string
+
+    VacancyFilterObjectDto:
+      type: object
+      required: [ skills, minSalary, maxSalary, minExperienceYears, location ]
+      additionalProperties: false
+      properties:
+        searchString:
+          type: string
+        skills:
+          type: array
+          items:
+            type: string
+        minSalary:
+          type: integer
+        maxSalary:
+          type: integer
+        minExperienceYears:
+          type: integer
+        location:
+          type: string
+        companyName:
+          type: string
+
+    VacancyGetObjectDto:
+      type: object
+      required: [ id ]
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/VacancyId'
+
+    VacancyDeleteObjectDto:
+      type: object
+      required: [ id ]
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/VacancyId'
+
+    ResumeResponseObjectDto:
+      type: object
+      required: [ id, vacancyId, userId, fileName, fileKey, fileSize, uploadedAt, status ]
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/ResumeId'
+        vacancyId:
+          $ref: '#/components/schemas/VacancyId'
+        userId:
+          $ref: '#/components/schemas/UserId'
+        fileName:
+          type: string
+        fileKey:
+          type: string
+        fileSize:
+          type: integer
+        uploadedAt:
+          type: string
+          format: date-time
+        status:
+          $ref: '#/components/schemas/ResumeProcessingStatusDto'
+        analysis:
+          nullable: true
+          description: Результат анализа резюме (доступен после обработки)
+          allOf:
+            - $ref: '#/components/schemas/ResumeAnalysisResponseObjectDto'
+
+    ResumeAnalysisResponseObjectDto:
+      type: object
+      required: [ id, resumeId, score, details, llmProvider, llmModel, createdAt ]
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/ResumeAnalysisId'
+        resumeId:
+          $ref: '#/components/schemas/ResumeId'
+        score:
+          type: integer
+          minimum: 0
+          maximum: 100
+        details:
+          $ref: '#/components/schemas/ResumeAnalysisDetailsDto'
+        llmProvider:
+          $ref: '#/components/schemas/LLMProviderDto'
+        llmModel:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    VacancyResponseObjectDto:
+      type: object
+      required: [ id, title, description, scoreThreshold, location, minExperienceYears, skills, salaryFrom, salaryTo, isActive, createdAt, createdBy, companyName ]
+      properties:
+        id:
+          $ref: '#/components/schemas/VacancyId'
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          minLength: 10
+          maxLength: 5000
+        scoreThreshold:
+          type: integer
+          minimum: 0
+          maximum: 100
+        location:
+          nullable: true
+          type: string
+        minExperienceYears:
+          type: integer
+        skills:
+          type: array
+          items:
+            type: string
+        salaryFrom:
+          type: integer
+          minimum: 1
+          nullable: true
+        salaryTo:
+          type: integer
+          nullable: true
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          $ref: '#/components/schemas/UserId'
+        companyName:
+          type: string
+
+    PaginationResponseObjectDto:
+      type: object
+      required: [ page, perPage, totalElements, hasNext ]
+      properties:
+        page:
+          type: integer
+          minimum: 0
+        perPage:
+          type: integer
+          minimum: 1
+          maximum: 1000
+        totalElements:
+          type: integer
+        hasNext:
+          type: boolean
+
+    ResumeResponseSingleDto:
+      allOf:
+        - type: object
+          properties:
+            resume:
+              $ref: '#/components/schemas/ResumeResponseObjectDto'
+
+    ResumeResponseMultiDto:
+      allOf:
+        - type: object
+          properties:
+            resumes:
+              type: array
+              items:
+                $ref: '#/components/schemas/ResumeResponseObjectDto'
+
+    VacancyResponseSingleDto:
+      allOf:
+        - type: object
+          required: [vacancy]
+          properties:
+            vacancy:
+              $ref: '#/components/schemas/VacancyResponseObjectDto'
+
+    VacancyResponseMultiDto:
+      allOf:
+        - type: object
+          properties:
+            vacancies:
+              type: array
+              items:
+                $ref: '#/components/schemas/VacancyResponseObjectDto'
+
+    PaginationResponseDto:
+      allOf:
+        - type: object
+          required: [pagination]
+          properties:
+            pagination:
+              $ref: '#/components/schemas/PaginationResponseObjectDto'
+
+    # ---Запросы---
+    ResumeUploadRequestDto:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/IRequestDto'
+        - $ref: '#/components/schemas/RequestDebugDto'
+        - type: object
+          required: [ resume ]
+          properties:
+            resume:
+              $ref: '#/components/schemas/ResumeUploadObjectDto'
+
+    ResumeGetRequestDto:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/IRequestDto'
+        - $ref: '#/components/schemas/RequestDebugDto'
+        - type: object
+          required: [ resume ]
+          properties:
+            resume:
+              $ref: '#/components/schemas/ResumeGetObjectDto'
+
+    MyResumesGetPaginationRequestDto:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/IRequestDto'
+        - $ref: '#/components/schemas/RequestDebugDto'
+        - type: object
+          required: [ pagination ]
+          properties:
+            pagination:
+              $ref: '#/components/schemas/PaginationRequestObjectDto'
+
+    ResumeDownloadRequestDto:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/IRequestDto'
+        - $ref: '#/components/schemas/RequestDebugDto'
+        - type: object
+          required: [ resume ]
+          properties:
+            resume:
+              $ref: '#/components/schemas/ResumeDownloadObjectDto'
+
+    VacancyCreateRequestDto:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/IRequestDto'
+        - $ref: '#/components/schemas/RequestDebugDto'
+        - type: object
+          required: [ vacancy ]
+          properties:
+            vacancy:
+              $ref: '#/components/schemas/VacancyCreateObjectDto'
+
+    VacancySearchPaginationRequestDto:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/IRequestDto'
+        - $ref: '#/components/schemas/RequestDebugDto'
+        - type: object
+          required: [pagination]
+          additionalProperties: false
+          properties:
+            pagination:
+              $ref: '#/components/schemas/PaginationRequestObjectDto'
+            vacancyFilter:
+              $ref: '#/components/schemas/VacancyFilterObjectDto'
+
+    VacancyResumesGetPaginationRequestDto:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/IRequestDto'
+        - $ref: '#/components/schemas/RequestDebugDto'
+        - type: object
+          required: [ pagination, vacancy ]
+          additionalProperties: false
+          properties:
+            pagination:
+              $ref: '#/components/schemas/PaginationRequestObjectDto'
+            vacancy:
+              $ref: '#/components/schemas/VacancyGetObjectDto'
+
+    VacancyDeleteRequestDto:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/IRequestDto'
+        - $ref: '#/components/schemas/RequestDebugDto'
+        - type: object
+          required: [ vacancy ]
+          additionalProperties: false
+          properties:
+            vacancy:
+              $ref: '#/components/schemas/VacancyDeleteObjectDto'
+
+    VacancyGetRequestDto:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/IRequestDto'
+        - $ref: '#/components/schemas/RequestDebugDto'
+        - type: object
+          required: [ vacancy ]
+          properties:
+            vacancy:
+              $ref: '#/components/schemas/VacancyGetObjectDto'
+
+    # ---Ответы---
+    ResumeUploadResponseDto:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/IResponseDto'
+        - $ref: '#/components/schemas/ResumeResponseSingleDto'
+    
+    ResumeGetResponseDto:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/IResponseDto'
+        - $ref: '#/components/schemas/ResumeResponseSingleDto'
+
+    ResumesPaginationResponseDto:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/IResponseDto'
+        - $ref: '#/components/schemas/ResumeResponseMultiDto'
+        - $ref: '#/components/schemas/PaginationResponseDto'
+
+
+    VacancyCreateResponseDto:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/IResponseDto'
+        - $ref: '#/components/schemas/VacancyResponseSingleDto'
+
+    VacancyGetResponseDto:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/IResponseDto'
+        - $ref: '#/components/schemas/VacancyResponseSingleDto'
+
+
+    VacanciesPaginationResponseDto:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/IResponseDto'
+        - $ref: '#/components/schemas/VacancyResponseMultiDto'
+        - $ref: '#/components/schemas/PaginationResponseDto'
+
+    VacancyDeleteResponseDto:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/IResponseDto'
+        - $ref: '#/components/schemas/VacancyResponseSingleDto'
+
+
+security:
+  - bearerAuth: []
+
+paths:
+  /api/v1/resume/upload:
+    post:
+      summary: Загрузка резюме под вакансию (Кандидат)
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResumeUploadRequestDto'
+      responses:
+        200:
+          description: Результат загрузки
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResumeUploadResponseDto'
+  /api/v1/resume/get:
+    post:
+      summary: Получение резюме по ID (HR)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResumeGetRequestDto'
+      responses:
+        200:
+          description: Информация о резюме
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResumeGetResponseDto'
+  /api/v1/resume/my:
+    post:
+      summary: Получение списка своих резюме (кандидат)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/MyResumesGetPaginationRequestDto'
+      responses:
+        200:
+          description: Список резюме
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResumesPaginationResponseDto'
+  /api/v1/resume/download:
+    post:
+      summary: Загрузка файла с резюме (своего для кандидата, любого для HR)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResumeDownloadRequestDto'
+      responses:
+        200:
+          description: Результат анализа
+          content:
+            application/octet-stream:
+              schema:
+                $ref: "#/components/schemas/FileResponseDto"
+  /api/v1/vacancy/create:
+    post:
+      summary: Создание вакансии (HR)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VacancyCreateRequestDto'
+      responses:
+        200:
+          description: Вакансия создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VacancyCreateResponseDto'
+  /api/v1/vacancy/get:
+    post:
+      summary: Получение вакансии по ID
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VacancyGetRequestDto'
+      responses:
+        '200':
+          description: Получение резюме по ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VacancyGetResponseDto'
+  /api/v1/vacancy/search:
+    post:
+      summary: Поиск вакансий по ключевым словам
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VacancySearchPaginationRequestDto'
+      responses:
+        200:
+          description: Список вакансий
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VacanciesPaginationResponseDto'
+  /api/v1/vacancy/resumes:
+    post:
+      summary: Получение резюме по вакансии (HR)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VacancyResumesGetPaginationRequestDto'
+      responses:
+        200:
+          description: Список резюме
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VacanciesPaginationResponseDto'
+  /api/v1/vacancy/delete:
+    post:
+      summary: Деактивация (удаление) вакансии (HR)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VacancyDeleteRequestDto'
+      responses:
+        200:
+          description: Результат удаления
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VacancyDeleteResponseDto'
