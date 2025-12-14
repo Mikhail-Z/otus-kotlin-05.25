@@ -93,7 +93,7 @@ private fun DebugDto?.dtoToWorkMode(): WorkMode = when (this?.mode) {
     null -> WorkMode.PROD
 }
 
-private fun DebugDto.dtoToStubCase(): DebugStubs = when (this.stub) {
+private fun DebugDto?.dtoToStubCase(): DebugStubs = when (this?.stub) {
     DebugStubsDto.SUCCESS -> DebugStubs.SUCCESS
     DebugStubsDto.NOT_FOUND -> DebugStubs.NOT_FOUND
     DebugStubsDto.BAD_ID -> DebugStubs.BAD_ID

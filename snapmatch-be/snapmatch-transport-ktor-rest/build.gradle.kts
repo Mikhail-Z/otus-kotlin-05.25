@@ -4,18 +4,6 @@ plugins {
     alias(libs.plugins.kotlinx.serialization)
 }
 
-application {
-    mainClass.set("io.ktor.server.cio.EngineMain")
-}
-
-ktor {
-    docker {
-        localImageName.set(project.name)
-        imageTag.set(project.version.toString())
-        jreVersion.set(JavaVersion.VERSION_21)
-    }
-}
-
 dependencies {
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.netty)

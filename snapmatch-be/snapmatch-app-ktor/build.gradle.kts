@@ -5,7 +5,7 @@ plugins {
 }
 
 application {
-    mainClass.set("io.ktor.server.cio.EngineMain")
+    mainClass.set("io.ktor.server.netty.EngineMain")
 }
 
 ktor {
@@ -35,6 +35,8 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.ktor.serialization.json)
     implementation(libs.ktor.serialization.jackson)
+    implementation(libs.jackson.kotlin)
+    implementation(libs.jackson.datatype)
 
     // Logging
     implementation(libs.logback)

@@ -20,12 +20,31 @@ suspend inline fun <reified Q : IRequestDto, reified R : IResponseDto> Applicati
 ) {
     try {
         val request = receive<Q>()
+        lateinit var ctx: Context
         val response = appSettings.processRequest(
-            { fromRequest(request) },
+            {
+                fromRequest(request)
+                ctx = this  // Capture context
+            },
             toResponse,
             clazz
         )
         respond(HttpStatusCode.OK, response)
+
+        // Send WebSocket notification for resume upload
+        if (ctx.command == ai.snapmatch.common.models.Command.UPLOAD_RESUME &&
+            ctx.resumeResponse.userId.asString().isNotEmpty()) {
+            try {
+                application.log.info("Attempting to send WebSocket notification: response type = ${response::class.qualifiedName}, is IResponseDto = ${response is IResponseDto}")
+                appSettings.corSettings.wsSessionRepo.sendToUser(
+                    ctx.resumeResponse.userId.asString(),
+                    response
+                )
+                application.log.info("WebSocket notification sent for resume upload to user: ${ctx.resumeResponse.userId.asString()}")
+            } catch (e: Exception) {
+                application.log.error("Failed to send WebSocket notification: ${e.message}", e)
+            }
+        }
     } catch (e: Exception) {
         application.log.error("Error processing $logId", e)
         respond(HttpStatusCode.InternalServerError, "Internal server error")

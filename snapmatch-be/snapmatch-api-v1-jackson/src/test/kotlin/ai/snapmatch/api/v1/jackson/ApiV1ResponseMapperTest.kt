@@ -12,7 +12,7 @@ class ApiV1ResponseMapperTest {
     @Test
     fun `should serialize ResumeUploadResponse to JSON`() {
         val response = ResumeUploadResponseDto(
-            responseType = "resumeUpload",
+            responseType = "uploadResume",
             result = ResponseResultDto.SUCCESS,
             errors = emptyList(),
             resume = ResumeResponseObjectDto(
@@ -30,7 +30,7 @@ class ApiV1ResponseMapperTest {
         val json = apiV1ResponseSerialize(response)
         
         assertNotNull(json)
-        assert(json.contains("resumeUpload"))
+        assert(json.contains("uploadResume"))
         assert(json.contains("success"))
         assert(json.contains("test-resume.pdf"))
         assert(json.contains("550e8400-e29b-41d4-a716-446655440000"))
@@ -41,7 +41,7 @@ class ApiV1ResponseMapperTest {
     fun `should deserialize JSON to ResumeUploadResponse`() {
         val json = """
             {
-                "responseType": "resumeUpload",
+                "responseType": "uploadResume",
                 "result": "success",
                 "errors": [],
                 "resume": {
@@ -59,7 +59,7 @@ class ApiV1ResponseMapperTest {
 
         val response: ResumeUploadResponseDto = apiV1ResponseDeserialize(json)
         
-        assertEquals("resumeUpload", response.responseType)
+        assertEquals("uploadResume", response.responseType)
         assertEquals(ResponseResultDto.SUCCESS, response.result)
         assertEquals(0, response.errors?.size)
         assertEquals(UUID.fromString("550e8400-e29b-41d4-a716-446655440000"), response.resume?.id)
@@ -71,7 +71,7 @@ class ApiV1ResponseMapperTest {
     @Test
     fun `should handle serialization roundtrip for ResumeUploadResponse`() {
         val originalResponse = ResumeUploadResponseDto(
-            responseType = "resumeUpload",
+            responseType = "uploadResume",
             result = ResponseResultDto.ERROR,
             errors = listOf(
                 ErrorDto(
@@ -97,7 +97,7 @@ class ApiV1ResponseMapperTest {
     @Test
     fun `should serialize response with processing status`() {
         val response = ResumeUploadResponseDto(
-            responseType = "resumeUpload",
+            responseType = "uploadResume",
             result = ResponseResultDto.SUCCESS,
             errors = null,
             resume = ResumeResponseObjectDto(

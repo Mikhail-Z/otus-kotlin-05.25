@@ -23,17 +23,17 @@ class ApiV1RequestMapperTest {
                     fileName = "test-resume.pdf"
                 )
             ),
-            requestType = "resumeUpload"
+            requestType = "uploadResume"
         )
 
         val json = apiV1RequestSerialize(request)
-        
+
         assertNotNull(json)
-        assert(json.contains("resumeUpload"))
+        assert(json.contains("uploadResume"))
         assert(json.contains("test-resume.pdf"))
         assert(json.contains("550e8400-e29b-41d4-a716-446655440000"))
-        assert(json.contains("PROD"))
-        assert(json.contains("SUCCESS"))
+        assert(json.contains("prod"))
+        assert(json.contains("success"))
     }
 
     @Test
@@ -41,8 +41,8 @@ class ApiV1RequestMapperTest {
         val json = """
             {
                 "debug": {
-                    "mode": "PROD",
-                    "stub": "SUCCESS"
+                    "mode": "prod",
+                    "stub": "success"
                 },
                 "resume": {
                     "id": "550e8400-e29b-41d4-a716-446655440000",
@@ -52,18 +52,18 @@ class ApiV1RequestMapperTest {
                         "fileName": "test-resume.pdf"
                     }
                 },
-                "requestType": "resumeUpload"
+                "requestType": "uploadResume"
             }
         """.trimIndent()
 
         val request: ResumeUploadRequestDto = apiV1RequestDeserialize(json)
-        
-        assertEquals("resumeUpload", request.requestType)
-        assertEquals(DebugModeDto.PROD, request.debug.mode)
-        assertEquals(DebugStubsDto.SUCCESS, request.debug.stub)
-        assertEquals(UUID.fromString("550e8400-e29b-41d4-a716-446655440000"), request.resume.id)
-        assertEquals(UUID.fromString("550e8400-e29b-41d4-a716-446655440001"), request.resume.vacancyId)
-        assertEquals("test-resume.pdf", request.resume.file.fileName)
+
+        assertEquals("uploadResume", request.requestType)
+        assertEquals(DebugModeDto.PROD, request.debug?.mode)
+        assertEquals(DebugStubsDto.SUCCESS, request.debug?.stub)
+        assertEquals(UUID.fromString("550e8400-e29b-41d4-a716-446655440000"), request.resume?.id)
+        assertEquals(UUID.fromString("550e8400-e29b-41d4-a716-446655440001"), request.resume?.vacancyId)
+        assertEquals("test-resume.pdf", request.resume?.file?.fileName)
     }
 
     @Test
@@ -81,17 +81,17 @@ class ApiV1RequestMapperTest {
                     fileName = "roundtrip-test.pdf"
                 )
             ),
-            requestType = "resumeUpload"
+            requestType = "uploadResume"
         )
 
         val json = apiV1RequestSerialize(originalRequest)
         val deserializedRequest: ResumeUploadRequestDto = apiV1RequestDeserialize(json)
-        
+
         assertEquals(originalRequest.requestType, deserializedRequest.requestType)
-        assertEquals(originalRequest.debug.mode, deserializedRequest.debug.mode)
-        assertEquals(originalRequest.debug.stub, deserializedRequest.debug.stub)
-        assertEquals(originalRequest.resume.id, deserializedRequest.resume.id)
-        assertEquals(originalRequest.resume.vacancyId, deserializedRequest.resume.vacancyId)
-        assertEquals(originalRequest.resume.file.fileName, deserializedRequest.resume.file.fileName)
+        assertEquals(originalRequest.debug?.mode, deserializedRequest.debug?.mode)
+        assertEquals(originalRequest.debug?.stub, deserializedRequest.debug?.stub)
+        assertEquals(originalRequest.resume?.id, deserializedRequest.resume?.id)
+        assertEquals(originalRequest.resume?.vacancyId, deserializedRequest.resume?.vacancyId)
+        assertEquals(originalRequest.resume?.file?.fileName, deserializedRequest.resume?.file?.fileName)
     }
 }
