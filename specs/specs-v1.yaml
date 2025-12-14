@@ -72,7 +72,7 @@ components:
       discriminator:
         propertyName: responseType
         mapping:
-          uploadResume: '#/components/schemas/ResumeGetResponseDto'
+          uploadResume: '#/components/schemas/ResumeUploadResponseDto'
           getResume: '#/components/schemas/ResumeGetResponseDto'
           getMyResumes: '#/components/schemas/ResumesPaginationResponseDto'
           #downloadResume: '#/components/schemas/ResumeDownloadResponse'
@@ -155,7 +155,6 @@ components:
 
     RequestDebugDto:
       type: object
-      required: [ debug ]
       properties:
         debug:
           $ref: '#/components/schemas/DebugDto'
@@ -510,7 +509,6 @@ components:
         - $ref: '#/components/schemas/IRequestDto'
         - $ref: '#/components/schemas/RequestDebugDto'
         - type: object
-          required: [pagination]
           additionalProperties: false
           properties:
             pagination:
@@ -524,7 +522,7 @@ components:
         - $ref: '#/components/schemas/IRequestDto'
         - $ref: '#/components/schemas/RequestDebugDto'
         - type: object
-          required: [ pagination, vacancy ]
+          required: [ vacancy ]
           additionalProperties: false
           properties:
             pagination:

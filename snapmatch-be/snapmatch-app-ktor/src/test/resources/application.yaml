@@ -1,0 +1,5 @@
+ktor:
+  deployment:
+    port: 0  # Random port for tests
+  application:
+    modules: []  # No modules loaded from config in tests
